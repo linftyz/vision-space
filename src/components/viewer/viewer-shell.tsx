@@ -30,6 +30,7 @@ export function ViewerShell() {
         currentImage={currentImage}
         openFolder={actions.openFolder}
         openImage={actions.openImage}
+        openRecentItem={actions.openRecentItem}
         setFitMode={actions.setFitMode}
         toggleFilmstrip={actions.toggleFilmstrip}
         zoomBy={actions.zoomBy}

@@ -35,6 +35,20 @@ export type ViewerPreferences = {
   lastPath?: string;
 };
 
+export type ViewerRecents = {
+  recentFiles: RecentItem[];
+  recentFolders: RecentItem[];
+};
+
+export type RecentItemKind = "file" | "folder";
+
+export type RecentItem = {
+  path: string;
+  name: string;
+  kind: RecentItemKind;
+  openedAt: number;
+};
+
 export type ThemeMode = "system" | "light" | "dark";
 
 export type ThemeAccent = "amber" | "cyan" | "rose" | "violet";

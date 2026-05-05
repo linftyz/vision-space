@@ -5,7 +5,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 import { showError } from "@/services/toasts";
 import { applyTheme, subscribeSystemTheme } from "@/services/theme";
-import { loadPreferences } from "@/services/tauri-viewer";
+import { loadPreferences, loadRecents } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { useViewerActions } from "@/hooks/use-viewer-actions";
 
@@ -18,6 +18,9 @@ export function useViewerPreferences() {
       useViewerStore.getState().setThemeAccent(preferences.themeAccent);
       useViewerStore.getState().setThemeMode(preferences.themeMode);
       useViewerStore.getState().setShowFilmstrip(preferences.showFilmstrip);
+    });
+    void loadRecents().then((recents) => {
+      useViewerStore.getState().setRecentItems(recents);
     });
   }, []);
 }

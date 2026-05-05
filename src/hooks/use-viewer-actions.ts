@@ -5,27 +5,34 @@ import {
   loadCollection,
   openFolderDialog,
   openImageDialog,
+  removeRecentItem,
   savePreference,
 } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
-import type { FitMode } from "@/types/viewer";
+import type { FitMode, RecentItem } from "@/types/viewer";
 
 export function useViewerActions() {
-  const loadPaths = useCallback(async (paths: string[]) => {
-    if (!isTauri()) {
-      showInfo(
-        "Run inside Tauri",
-        "Native file access is available in the desktop app.",
-      );
-      return;
-    }
+  const loadPaths = useCallback(
+    async (
+      paths: string[],
+      recentItem?: Pick<RecentItem, "kind" | "path">,
+    ) => {
+      if (!isTauri()) {
+        showInfo(
+          "Run inside Tauri",
+          "Native file access is available in the desktop app.",
+        );
+        return;
+      }
 
-    try {
-      await loadCollection(paths);
-    } catch (error) {
-      showError(error);
-    }
-  }, []);
+      try {
+        await loadCollection(paths, recentItem);
+      } catch (error) {
+        showError(error);
+      }
+    },
+    [],
+  );
 
   const openImage = useCallback(async () => {
     if (!isTauri()) {
@@ -35,7 +42,7 @@ export function useViewerActions() {
 
     const selected = await openImageDialog();
     if (selected) {
-      await loadPaths([selected]);
+      await loadPaths([selected], { kind: "file", path: selected });
     }
   }, [loadPaths]);
 
@@ -47,9 +54,23 @@ export function useViewerActions() {
 
     const selected = await openFolderDialog();
     if (selected) {
-      await loadPaths([selected]);
+      await loadPaths([selected], { kind: "folder", path: selected });
     }
   }, [loadPaths]);
+
+  const openRecentItem = useCallback(async (item: RecentItem) => {
+    if (!isTauri()) {
+      showInfo("Run inside Tauri", "Recent items are available in the desktop app.");
+      return;
+    }
+
+    try {
+      await loadCollection([item.path], item);
+    } catch (error) {
+      await removeRecentItem(item.kind, item.path);
+      showError(error);
+    }
+  }, []);
 
   const zoomBy = useCallback((delta: number) => {
     const { zoom, setZoom } = useViewerStore.getState();
@@ -70,6 +91,7 @@ export function useViewerActions() {
     loadPaths,
     openFolder,
     openImage,
+    openRecentItem,
     setFitMode,
     toggleFilmstrip,
     zoomBy,
