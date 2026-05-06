@@ -1,5 +1,11 @@
-import { X } from "lucide-react";
+import type { ReactNode } from "react";
+import { Copy, FolderOpen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   formatBytes,
   formatExifDate,
@@ -40,6 +46,7 @@ export function InfoPanel({
   const imageSize = useViewerStore((state) => state.imageSize);
   const showInfoPanel = useViewerStore((state) => state.showInfoPanel);
   const setShowInfoPanel = useViewerStore((state) => state.setShowInfoPanel);
+  const folderPath = dirname(currentImage.path);
   const modifiedDate = formatModifiedDate(currentImage.modifiedMs);
   const captureRows = imageMetadata
     ? compactInfoRows([
@@ -83,6 +90,7 @@ export function InfoPanel({
           : null,
       ])
     : [];
+  const hasExifRows = captureRows.length > 0 || processingRows.length > 0;
 
   if (!showInfoPanel) return null;
 
@@ -131,8 +139,38 @@ export function InfoPanel({
           </div>
 
           <div className="grid gap-2 border-t pt-4">
-            <InfoBlock label="Folder" value={dirname(currentImage.path)} />
-            <InfoBlock label="Path" value={currentImage.path} />
+            <InfoBlock
+              actions={
+                <>
+                  <InfoActionButton
+                    label="Copy folder path"
+                    onClick={() => void copyPath(folderPath)}
+                  >
+                    <Copy aria-hidden="true" />
+                  </InfoActionButton>
+                  <InfoActionButton
+                    label="Show folder in Finder"
+                    onClick={() => void revealPath(folderPath)}
+                  >
+                    <FolderOpen aria-hidden="true" />
+                  </InfoActionButton>
+                </>
+              }
+              label="Folder"
+              value={folderPath}
+            />
+            <InfoBlock
+              actions={
+                <InfoActionButton
+                  label="Copy full path"
+                  onClick={() => void copyPath(currentImage.path)}
+                >
+                  <Copy aria-hidden="true" />
+                </InfoActionButton>
+              }
+              label="Path"
+              value={currentImage.path}
+            />
           </div>
 
           <div className="grid gap-3 border-t pt-4">
@@ -148,6 +186,11 @@ export function InfoPanel({
                 ) : null}
                 {processingRows.length ? (
                   <InfoSection rows={processingRows} title="Processing" />
+                ) : null}
+                {!hasExifRows ? (
+                  <div className="text-muted-foreground text-sm">
+                    No useful EXIF fields were found for this image.
+                  </div>
                 ) : null}
               </div>
             ) : (
@@ -217,11 +260,51 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InfoBlock({ label, value }: { label: string; value: string }) {
+function InfoBlock({
+  actions,
+  label,
+  value,
+}: {
+  actions?: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="grid gap-1">
-      <div className="text-muted-foreground text-xs">{label}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-muted-foreground text-xs">{label}</div>
+        {actions ? <div className="flex items-center gap-1">{actions}</div> : null}
+      </div>
       <div className="break-words text-sm leading-5">{value}</div>
     </div>
+  );
+}
+
+function InfoActionButton({
+  children,
+  label,
+  onClick,
+}: {
+  children: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={label}
+            className="shrink-0"
+            onClick={onClick}
+            size="icon-xs"
+            variant="ghost"
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
   );
 }
