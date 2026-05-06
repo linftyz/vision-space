@@ -75,6 +75,9 @@ export async function loadPreferences() {
 
   return {
     fitMode: (await store.get<ViewerPreferences["fitMode"]>("fitMode")) ?? "fit",
+    sortMode:
+      (await store.get<ViewerPreferences["sortMode"]>("sortMode")) ??
+      defaultPreferences.sortMode,
     themeAccent:
       (await store.get<ViewerPreferences["themeAccent"]>("themeAccent")) ??
       defaultPreferences.themeAccent,

@@ -15,6 +15,7 @@ export function useViewerPreferences() {
   useEffect(() => {
     void loadPreferences().then((preferences) => {
       useViewerStore.getState().setFitMode(preferences.fitMode);
+      useViewerStore.getState().setSortMode(preferences.sortMode);
       useViewerStore.getState().setThemeAccent(preferences.themeAccent);
       useViewerStore.getState().setThemeMode(preferences.themeMode);
       useViewerStore.getState().setShowFilmstrip(preferences.showFilmstrip);

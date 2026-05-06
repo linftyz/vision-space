@@ -13,6 +13,14 @@ export const IMAGE_EXTENSIONS = [
 
 export type FitMode = "fit" | "actual" | "width" | "free";
 
+export type SortMode =
+  | "nameAsc"
+  | "nameDesc"
+  | "modifiedDesc"
+  | "modifiedAsc"
+  | "sizeDesc"
+  | "sizeAsc";
+
 export type ImageFile = {
   path: string;
   name: string;
@@ -29,6 +37,7 @@ export type ImageCollection = {
 
 export type ViewerPreferences = {
   fitMode: Exclude<FitMode, "free">;
+  sortMode: SortMode;
   themeAccent: ThemeAccent;
   themeMode: ThemeMode;
   showFilmstrip: boolean;

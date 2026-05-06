@@ -3,7 +3,9 @@ import { clamp, normalizeRotation } from "@/lib/format";
 import type {
   FitMode,
   ImageCollection,
+  ImageFile,
   RecentItem,
+  SortMode,
   ThemeAccent,
   ThemeMode,
   ViewerPreferences,
@@ -14,6 +16,7 @@ type ViewerState = {
   collection: ImageCollection | null;
   currentIndex: number;
   fitMode: FitMode;
+  sortMode: SortMode;
   recentFiles: RecentItem[];
   recentFolders: RecentItem[];
   themeAccent: ThemeAccent;
@@ -28,6 +31,7 @@ type ViewerState = {
   next: () => void;
   previous: () => void;
   setFitMode: (fitMode: FitMode) => void;
+  setSortMode: (sortMode: SortMode) => void;
   setRecentItems: (items: {
     recentFiles: RecentItem[];
     recentFolders: RecentItem[];
@@ -45,6 +49,7 @@ type ViewerState = {
 
 export const defaultPreferences: ViewerPreferences = {
   fitMode: "fit",
+  sortMode: "nameAsc",
   themeAccent: "amber",
   themeMode: "system",
   showFilmstrip: true,
@@ -59,6 +64,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   collection: null,
   currentIndex: 0,
   fitMode: defaultPreferences.fitMode,
+  sortMode: defaultPreferences.sortMode,
   recentFiles: defaultRecents.recentFiles,
   recentFolders: defaultRecents.recentFolders,
   themeAccent: defaultPreferences.themeAccent,
@@ -68,14 +74,25 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   rotation: 0,
   pan: { x: 0, y: 0 },
   imageSize: null,
-  setCollection: (collection) =>
+  setCollection: (collection) => {
+    const { sortMode } = get();
+    const selectedImage = collection.images[collection.selectedIndex];
+    const images = sortImages(collection.images, sortMode);
+    const selectedIndex = selectedImage
+      ? Math.max(
+          images.findIndex((image) => image.path === selectedImage.path),
+          0,
+        )
+      : 0;
+
     set({
-      collection,
-      currentIndex: collection.selectedIndex,
+      collection: { ...collection, images, selectedIndex },
+      currentIndex: selectedIndex,
       imageSize: null,
       pan: { x: 0, y: 0 },
       rotation: 0,
-    }),
+    });
+  },
   setCurrentIndex: (index) => {
     const { collection } = get();
     if (!collection) return;
@@ -105,6 +122,28 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
     );
   },
   setFitMode: (fitMode) => set({ fitMode }),
+  setSortMode: (sortMode) => {
+    const { collection, currentIndex } = get();
+    if (!collection) {
+      set({ sortMode });
+      return;
+    }
+
+    const selectedImage = collection.images[currentIndex];
+    const images = sortImages(collection.images, sortMode);
+    const nextIndex = selectedImage
+      ? Math.max(
+          images.findIndex((image) => image.path === selectedImage.path),
+          0,
+        )
+      : 0;
+
+    set({
+      sortMode,
+      collection: { ...collection, images, selectedIndex: nextIndex },
+      currentIndex: nextIndex,
+    });
+  },
   setRecentItems: ({ recentFiles, recentFolders }) =>
     set({ recentFiles, recentFolders }),
   setThemeAccent: (themeAccent) => set({ themeAccent }),
@@ -122,3 +161,31 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   setImageSize: (imageSize) => set({ imageSize }),
   resetView: () => set({ pan: { x: 0, y: 0 }, rotation: 0 }),
 }));
+
+function sortImages(images: ImageFile[], sortMode: SortMode) {
+  return [...images].sort((a, b) => {
+    if (sortMode === "nameAsc" || sortMode === "nameDesc") {
+      const value = compareNames(a.name, b.name);
+      return sortMode === "nameAsc" ? value : -value;
+    }
+
+    if (sortMode === "modifiedAsc" || sortMode === "modifiedDesc") {
+      const value = compareNumbers(a.modifiedMs ?? 0, b.modifiedMs ?? 0);
+      return sortMode === "modifiedAsc" ? value : -value;
+    }
+
+    const value = compareNumbers(a.size, b.size);
+    return sortMode === "sizeAsc" ? value : -value;
+  });
+}
+
+function compareNames(a: string, b: string) {
+  return a.localeCompare(b, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function compareNumbers(a: number, b: number) {
+  return a === b ? 0 : a - b;
+}

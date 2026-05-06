@@ -14,7 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { savePreference } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
-import type { FitMode, ThemeAccent, ThemeMode } from "@/types/viewer";
+import type { FitMode, SortMode, ThemeAccent, ThemeMode } from "@/types/viewer";
 
 const themeModes = [
   ["system", "System"],
@@ -29,6 +29,15 @@ const themeAccents = [
   ["violet", "Violet", "bg-[oklch(0.72_0.14_305)]"],
 ] as const satisfies readonly [ThemeAccent, string, string][];
 
+const sortModes = [
+  ["nameAsc", "Name A-Z"],
+  ["nameDesc", "Name Z-A"],
+  ["modifiedDesc", "Newest"],
+  ["modifiedAsc", "Oldest"],
+  ["sizeDesc", "Largest"],
+  ["sizeAsc", "Smallest"],
+] as const satisfies readonly [SortMode, string][];
+
 export function ViewerSettingsPopover({
   setFitMode,
   toggleFilmstrip,
@@ -39,11 +48,13 @@ export function ViewerSettingsPopover({
   zoomBy: (delta: number) => void;
 }) {
   const fitMode = useViewerStore((state) => state.fitMode);
+  const sortMode = useViewerStore((state) => state.sortMode);
   const showFilmstrip = useViewerStore((state) => state.showFilmstrip);
   const themeAccent = useViewerStore((state) => state.themeAccent);
   const themeMode = useViewerStore((state) => state.themeMode);
   const zoom = useViewerStore((state) => state.zoom);
   const rotateClockwise = useViewerStore((state) => state.rotateClockwise);
+  const setSortMode = useViewerStore((state) => state.setSortMode);
   const setThemeAccent = useViewerStore((state) => state.setThemeAccent);
   const setThemeMode = useViewerStore((state) => state.setThemeMode);
 
@@ -65,6 +76,14 @@ export function ViewerSettingsPopover({
     }
     setThemeAccent(nextThemeAccent);
     void savePreference("themeAccent", nextThemeAccent);
+  };
+  const updateSortMode = (value: string[]) => {
+    const nextSortMode = value[0] as SortMode | undefined;
+    if (!nextSortMode || !sortModes.some(([mode]) => mode === nextSortMode)) {
+      return;
+    }
+    setSortMode(nextSortMode);
+    void savePreference("sortMode", nextSortMode);
   };
   const updateZoom = (value: number | readonly number[]) => {
     const nextValue = Array.isArray(value) ? value[0] : value;
@@ -157,6 +176,33 @@ export function ViewerSettingsPopover({
               checked={showFilmstrip}
               onCheckedChange={toggleFilmstrip}
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div>
+              <div className="font-medium text-sm">Sort</div>
+              <div className="text-muted-foreground text-xs">
+                Order images in the current collection.
+              </div>
+            </div>
+            <ToggleGroup
+              aria-label="Sort images"
+              className="grid w-full grid-cols-2"
+              onValueChange={updateSortMode}
+              value={[sortMode]}
+              variant="outline"
+            >
+              {sortModes.map(([mode, label]) => (
+                <ToggleGroupItem
+                  aria-label={`Sort by ${label.toLowerCase()}`}
+                  className="w-full"
+                  key={mode}
+                  value={mode}
+                >
+                  {label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
 
           <div className="flex flex-col gap-2">
