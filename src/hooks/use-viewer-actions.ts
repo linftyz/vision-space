@@ -11,6 +11,10 @@ import {
 import { useViewerStore } from "@/stores/viewer-store";
 import type { FitMode, RecentItem } from "@/types/viewer";
 
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export function useViewerActions() {
   const loadPaths = useCallback(
     async (
@@ -25,10 +29,17 @@ export function useViewerActions() {
         return;
       }
 
+      const store = useViewerStore.getState();
+      store.setLoadError(null);
+      store.setLoadingMessage(paths.length > 1 ? "Opening dropped items..." : "Opening...");
+
       try {
         await loadCollection(paths, recentItem);
       } catch (error) {
+        useViewerStore.getState().setLoadError(errorMessage(error));
         showError(error);
+      } finally {
+        useViewerStore.getState().setLoadingMessage(null);
       }
     },
     [],
@@ -65,10 +76,16 @@ export function useViewerActions() {
     }
 
     try {
+      const store = useViewerStore.getState();
+      store.setLoadError(null);
+      store.setLoadingMessage(`Opening ${item.name}...`);
       await loadCollection([item.path], item);
     } catch (error) {
       await removeRecentItem(item.kind, item.path);
+      useViewerStore.getState().setLoadError(errorMessage(error));
       showError(error);
+    } finally {
+      useViewerStore.getState().setLoadingMessage(null);
     }
   }, []);
 

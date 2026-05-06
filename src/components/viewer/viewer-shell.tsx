@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/viewer/empty-state";
 import { Filmstrip } from "@/components/viewer/filmstrip";
 import { ImageStage } from "@/components/viewer/image-stage";
+import { LoadStateOverlay } from "@/components/viewer/load-state-overlay";
 import { TopBar } from "@/components/viewer/top-bar";
 import { useViewerActions } from "@/hooks/use-viewer-actions";
 import {
@@ -45,6 +46,7 @@ export function ViewerShell() {
             openImage={actions.openImage}
           />
         )}
+        <LoadStateOverlay />
       </div>
 
       {collection && <Filmstrip />}

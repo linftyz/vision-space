@@ -1,6 +1,12 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { ImageHud } from "@/components/viewer/image-hud";
 import { useElementSize } from "@/hooks/use-element-size";
 import { clamp } from "@/lib/format";
@@ -9,6 +15,8 @@ import { showError } from "@/services/toasts";
 import { assetUrl } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { ImageFile } from "@/types/viewer";
+
+type ImageLoadStatus = "loading" | "loaded" | "error";
 
 function isInteractiveTarget(target: EventTarget | null) {
   return target instanceof HTMLElement
@@ -19,6 +27,8 @@ function isInteractiveTarget(target: EventTarget | null) {
 export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
   const [stageRef, stageSize] = useElementSize<HTMLDivElement>();
   const [isDragging, setIsDragging] = useState(false);
+  const [imageStatus, setImageStatus] = useState<ImageLoadStatus>("loading");
+  const [reloadToken, setReloadToken] = useState(0);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const zoom = useViewerStore((state) => state.zoom);
@@ -26,11 +36,15 @@ export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
   const rotation = useViewerStore((state) => state.rotation);
   const pan = useViewerStore((state) => state.pan);
   const imageSize = useViewerStore((state) => state.imageSize);
-  const setZoom = useViewerStore((state) => state.setZoom);
   const setPan = useViewerStore((state) => state.setPan);
   const setImageSize = useViewerStore((state) => state.setImageSize);
   const next = useViewerStore((state) => state.next);
   const previous = useViewerStore((state) => state.previous);
+
+  useEffect(() => {
+    setImageStatus("loading");
+    setReloadToken(0);
+  }, [currentImage.path]);
 
   const computedZoom = useMemo(() => {
     if (!imageSize || stageSize.width === 0 || stageSize.height === 0) return 1;
@@ -89,7 +103,8 @@ export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
       onWheel={(event) => {
         event.preventDefault();
         const delta = event.deltaY > 0 ? 1 / 1.12 : 1.12;
-        setZoom(zoom * delta);
+        const store = useViewerStore.getState();
+        store.setZoom(store.zoom * delta);
       }}
     >
       <Button
@@ -112,13 +127,51 @@ export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
       </Button>
 
       <div className="absolute inset-0 z-0 flex items-center justify-center">
+        {imageStatus === "loading" && (
+          <div className="absolute z-10 flex items-center gap-2 rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-neutral-200 text-sm shadow-xl shadow-black/30 backdrop-blur">
+            <Spinner className="size-4 text-primary" />
+            <span>Loading image...</span>
+          </div>
+        )}
+        {imageStatus === "error" && (
+          <Alert className="absolute z-10 max-w-[min(28rem,calc(100%-2rem))] bg-background/90 text-foreground shadow-xl shadow-black/30 backdrop-blur" variant="error">
+            <AlertCircle aria-hidden="true" />
+            <AlertTitle>Could not render image</AlertTitle>
+            <AlertDescription>
+              <span className="break-words">{currentImage.name}</span>
+            </AlertDescription>
+            <div className="col-start-2 mt-2 flex flex-wrap gap-2">
+              <Button
+                onClick={() => {
+                  setImageStatus("loading");
+                  setReloadToken((value) => value + 1);
+                }}
+                size="xs"
+                variant="outline"
+              >
+                <RefreshCw aria-hidden="true" />
+                Retry
+              </Button>
+              <Button onClick={next} size="xs" variant="outline">
+                Next
+              </Button>
+            </div>
+          </Alert>
+        )}
         <img
-          key={currentImage.path}
+          key={`${currentImage.path}-${reloadToken}`}
           alt={currentImage.name}
-          className="max-w-none select-none shadow-2xl shadow-black/40 transition-opacity duration-200 will-change-transform"
+          className={cn(
+            "max-w-none select-none shadow-2xl shadow-black/40 transition-opacity duration-200 will-change-transform",
+            imageStatus !== "loaded" && "opacity-0",
+          )}
           draggable={false}
-          onError={() => showError(`Could not render '${currentImage.name}'.`)}
+          onError={() => {
+            setImageStatus("error");
+            showError(`Could not render '${currentImage.name}'.`);
+          }}
           onLoad={(event) => {
+            setImageStatus("loaded");
             setImageSize({
               width: event.currentTarget.naturalWidth || event.currentTarget.width,
               height:

@@ -22,6 +22,8 @@ type ViewerState = {
   themeAccent: ThemeAccent;
   themeMode: ThemeMode;
   showFilmstrip: boolean;
+  loadingMessage: string | null;
+  loadError: string | null;
   zoom: number;
   rotation: number;
   pan: { x: number; y: number };
@@ -39,6 +41,8 @@ type ViewerState = {
   setThemeAccent: (themeAccent: ThemeAccent) => void;
   setThemeMode: (themeMode: ThemeMode) => void;
   setShowFilmstrip: (showFilmstrip: boolean) => void;
+  setLoadingMessage: (message: string | null) => void;
+  setLoadError: (message: string | null) => void;
   setZoom: (zoom: number) => void;
   setRotation: (rotation: number) => void;
   rotateClockwise: () => void;
@@ -70,6 +74,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   themeAccent: defaultPreferences.themeAccent,
   themeMode: defaultPreferences.themeMode,
   showFilmstrip: defaultPreferences.showFilmstrip,
+  loadingMessage: null,
+  loadError: null,
   zoom: 1,
   rotation: 0,
   pan: { x: 0, y: 0 },
@@ -89,6 +95,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
       collection: { ...collection, images, selectedIndex },
       currentIndex: selectedIndex,
       imageSize: null,
+      loadError: null,
       pan: { x: 0, y: 0 },
       rotation: 0,
     });
@@ -149,6 +156,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   setThemeAccent: (themeAccent) => set({ themeAccent }),
   setThemeMode: (themeMode) => set({ themeMode }),
   setShowFilmstrip: (showFilmstrip) => set({ showFilmstrip }),
+  setLoadingMessage: (message) => set({ loadingMessage: message }),
+  setLoadError: (message) => set({ loadError: message }),
   setZoom: (zoom) =>
     set({
       fitMode: "free",
