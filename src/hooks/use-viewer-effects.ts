@@ -65,8 +65,12 @@ export function useAppMenu({
   openFolder,
   openImage,
   setFitMode,
+  toggleInfoPanel,
   zoomBy,
-}: Pick<ViewerActions, "openFolder" | "openImage" | "setFitMode" | "zoomBy">) {
+}: Pick<
+  ViewerActions,
+  "openFolder" | "openImage" | "setFitMode" | "toggleInfoPanel" | "zoomBy"
+>) {
   useEffect(() => {
     if (!isTauri()) return;
 
@@ -122,6 +126,12 @@ export function useAppMenu({
               accelerator: "CmdOrCtrl+1",
               action: () => setFitMode("fit"),
             },
+            {
+              id: "toggle-info",
+              text: "Toggle Info Panel",
+              accelerator: "CmdOrCtrl+I",
+              action: toggleInfoPanel,
+            },
             { item: "Separator" },
             { item: "Fullscreen", text: "Enter Full Screen" },
           ],
@@ -134,13 +144,14 @@ export function useAppMenu({
     return () => {
       mounted = false;
     };
-  }, [openFolder, openImage, setFitMode, zoomBy]);
+  }, [openFolder, openImage, setFitMode, toggleInfoPanel, zoomBy]);
 }
 
 export function useViewerShortcuts({
   setFitMode,
+  toggleInfoPanel,
   zoomBy,
-}: Pick<ViewerActions, "setFitMode" | "zoomBy">) {
+}: Pick<ViewerActions, "setFitMode" | "toggleInfoPanel" | "zoomBy">) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
@@ -172,6 +183,9 @@ export function useViewerShortcuts({
       } else if (event.key === " ") {
         event.preventDefault();
         setFitMode("fit");
+      } else if (event.key.toLowerCase() === "i" && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault();
+        toggleInfoPanel();
       } else if (event.key === "Escape" && isTauri()) {
         event.preventDefault();
         void getCurrentWindow().setFullscreen(false);
@@ -180,7 +194,7 @@ export function useViewerShortcuts({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setFitMode, zoomBy]);
+  }, [setFitMode, toggleInfoPanel, zoomBy]);
 }
 
 export function useAdjacentImagePreload() {

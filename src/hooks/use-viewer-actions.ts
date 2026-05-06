@@ -129,6 +129,10 @@ export function useViewerActions() {
     }
   }, []);
 
+  const toggleInfoPanel = useCallback(() => {
+    useViewerStore.getState().toggleInfoPanel();
+  }, []);
+
   const setFitMode = useCallback((fitMode: Exclude<FitMode, "free">) => {
     useViewerStore.getState().setFitMode(fitMode);
     void savePreference("fitMode", fitMode);
@@ -149,6 +153,7 @@ export function useViewerActions() {
     revealPath,
     setFitMode,
     toggleFilmstrip,
+    toggleInfoPanel,
     zoomBy,
   };
 }

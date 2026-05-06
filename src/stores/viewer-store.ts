@@ -22,6 +22,7 @@ type ViewerState = {
   themeAccent: ThemeAccent;
   themeMode: ThemeMode;
   showFilmstrip: boolean;
+  showInfoPanel: boolean;
   loadingMessage: string | null;
   loadError: string | null;
   zoom: number;
@@ -41,6 +42,8 @@ type ViewerState = {
   setThemeAccent: (themeAccent: ThemeAccent) => void;
   setThemeMode: (themeMode: ThemeMode) => void;
   setShowFilmstrip: (showFilmstrip: boolean) => void;
+  setShowInfoPanel: (showInfoPanel: boolean) => void;
+  toggleInfoPanel: () => void;
   setLoadingMessage: (message: string | null) => void;
   setLoadError: (message: string | null) => void;
   setZoom: (zoom: number) => void;
@@ -74,6 +77,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   themeAccent: defaultPreferences.themeAccent,
   themeMode: defaultPreferences.themeMode,
   showFilmstrip: defaultPreferences.showFilmstrip,
+  showInfoPanel: false,
   loadingMessage: null,
   loadError: null,
   zoom: 1,
@@ -156,6 +160,9 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   setThemeAccent: (themeAccent) => set({ themeAccent }),
   setThemeMode: (themeMode) => set({ themeMode }),
   setShowFilmstrip: (showFilmstrip) => set({ showFilmstrip }),
+  setShowInfoPanel: (showInfoPanel) => set({ showInfoPanel }),
+  toggleInfoPanel: () =>
+    set((state) => ({ showInfoPanel: !state.showInfoPanel })),
   setLoadingMessage: (message) => set({ loadingMessage: message }),
   setLoadError: (message) => set({ loadError: message }),
   setZoom: (zoom) =>

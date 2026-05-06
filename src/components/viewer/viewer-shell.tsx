@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/viewer/empty-state";
 import { Filmstrip } from "@/components/viewer/filmstrip";
 import { ImageStage } from "@/components/viewer/image-stage";
+import { InfoPanel } from "@/components/viewer/info-panel";
 import { LoadStateOverlay } from "@/components/viewer/load-state-overlay";
 import { TopBar } from "@/components/viewer/top-bar";
 import { useViewerActions } from "@/hooks/use-viewer-actions";
@@ -36,6 +37,7 @@ export function ViewerShell() {
         openImage={actions.openImage}
         openRecentItem={actions.openRecentItem}
         setFitMode={actions.setFitMode}
+        toggleInfoPanel={actions.toggleInfoPanel}
         toggleFilmstrip={actions.toggleFilmstrip}
         zoomBy={actions.zoomBy}
       />
@@ -53,6 +55,13 @@ export function ViewerShell() {
             openImage={actions.openImage}
           />
         )}
+        {currentImage ? (
+          <InfoPanel
+            copyPath={actions.copyPath}
+            currentImage={currentImage}
+            revealPath={actions.revealPath}
+          />
+        ) : null}
         <LoadStateOverlay />
       </div>
 

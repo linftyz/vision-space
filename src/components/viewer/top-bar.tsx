@@ -4,6 +4,7 @@ import {
   Aperture,
   FolderOpen,
   Image as ImageIcon,
+  Info,
   Maximize2,
   Minus,
   Plus,
@@ -24,6 +25,7 @@ export function TopBar({
   openImage,
   openRecentItem,
   setFitMode,
+  toggleInfoPanel,
   toggleFilmstrip,
   zoomBy,
 }: {
@@ -33,6 +35,7 @@ export function TopBar({
   openImage: () => Promise<void>;
   openRecentItem: (item: RecentItem) => Promise<void>;
   setFitMode: (fitMode: Exclude<FitMode, "free">) => void;
+  toggleInfoPanel: () => void;
   toggleFilmstrip: (value: boolean) => void;
   zoomBy: (delta: number) => void;
 }) {
@@ -113,6 +116,14 @@ export function TopBar({
           onClick={() => zoomBy(1.18)}
         >
           <Plus aria-hidden="true" />
+        </TooltipButton>
+        <TooltipButton
+          className="hidden sm:block"
+          label="Toggle info panel"
+          onClick={toggleInfoPanel}
+          shortcut="I"
+        >
+          <Info aria-hidden="true" />
         </TooltipButton>
         <TooltipButton
           className="hidden md:block"
