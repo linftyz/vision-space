@@ -1,13 +1,27 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatBytes, formatModifiedDate } from "@/lib/format";
+import {
+  formatBytes,
+  formatExifDate,
+  formatModifiedDate,
+  formatOrientation,
+} from "@/lib/format";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { ImageFile } from "@/types/viewer";
+
+type InfoRowItem = {
+  label: string;
+  value: string | null;
+};
 
 function dirname(path: string) {
   const parts = path.split(/[\\/]/).filter(Boolean);
   if (parts.length <= 1) return path;
   return parts.slice(0, -1).join("/");
+}
+
+function compactInfoRows(rows: Array<InfoRowItem | null>) {
+  return rows.filter((row): row is InfoRowItem => row !== null);
 }
 
 export function InfoPanel({
@@ -27,6 +41,48 @@ export function InfoPanel({
   const showInfoPanel = useViewerStore((state) => state.showInfoPanel);
   const setShowInfoPanel = useViewerStore((state) => state.setShowInfoPanel);
   const modifiedDate = formatModifiedDate(currentImage.modifiedMs);
+  const captureRows = imageMetadata
+    ? compactInfoRows([
+        imageMetadata.cameraModel
+          ? { label: "Camera", value: imageMetadata.cameraModel }
+          : null,
+        imageMetadata.lensModel
+          ? { label: "Lens", value: imageMetadata.lensModel }
+          : null,
+        imageMetadata.dateTimeOriginal
+          ? {
+              label: "Shot At",
+              value: formatExifDate(imageMetadata.dateTimeOriginal),
+            }
+          : null,
+        imageMetadata.exposureTime
+          ? { label: "Exposure", value: imageMetadata.exposureTime }
+          : null,
+        imageMetadata.fNumber
+          ? { label: "Aperture", value: imageMetadata.fNumber }
+          : null,
+        imageMetadata.iso ? { label: "ISO", value: imageMetadata.iso } : null,
+        imageMetadata.focalLength
+          ? { label: "Focal Length", value: imageMetadata.focalLength }
+          : null,
+        imageMetadata.orientation
+          ? {
+              label: "Orientation",
+              value: formatOrientation(imageMetadata.orientation),
+            }
+          : null,
+      ])
+    : [];
+  const processingRows = imageMetadata
+    ? compactInfoRows([
+        imageMetadata.colorSpace
+          ? { label: "Color Space", value: imageMetadata.colorSpace }
+          : null,
+        imageMetadata.software
+          ? { label: "Software", value: imageMetadata.software }
+          : null,
+      ])
+    : [];
 
   if (!showInfoPanel) return null;
 
@@ -58,7 +114,7 @@ export function InfoPanel({
               label="Dimensions"
               value={
                 imageSize
-                  ? `${imageSize.width} x ${imageSize.height}`
+                  ? formatDimensions(imageSize.width, imageSize.height)
                   : "Loading..."
               }
             />
@@ -87,38 +143,11 @@ export function InfoPanel({
               </div>
             ) : imageMetadata ? (
               <div className="grid gap-3">
-                {imageMetadata.cameraModel ? (
-                  <InfoRow label="Camera" value={imageMetadata.cameraModel} />
+                {captureRows.length ? (
+                  <InfoSection rows={captureRows} title="Capture" />
                 ) : null}
-                {imageMetadata.lensModel ? (
-                  <InfoRow label="Lens" value={imageMetadata.lensModel} />
-                ) : null}
-                {imageMetadata.dateTimeOriginal ? (
-                  <InfoRow label="Shot At" value={imageMetadata.dateTimeOriginal} />
-                ) : null}
-                {imageMetadata.exposureTime ? (
-                  <InfoRow label="Exposure" value={imageMetadata.exposureTime} />
-                ) : null}
-                {imageMetadata.fNumber ? (
-                  <InfoRow label="Aperture" value={imageMetadata.fNumber} />
-                ) : null}
-                {imageMetadata.iso ? (
-                  <InfoRow label="ISO" value={imageMetadata.iso} />
-                ) : null}
-                {imageMetadata.focalLength ? (
-                  <InfoRow label="Focal Length" value={imageMetadata.focalLength} />
-                ) : null}
-                {imageMetadata.orientation ? (
-                  <InfoRow
-                    label="Orientation"
-                    value={String(imageMetadata.orientation)}
-                  />
-                ) : null}
-                {imageMetadata.software ? (
-                  <InfoRow label="Software" value={imageMetadata.software} />
-                ) : null}
-                {imageMetadata.colorSpace ? (
-                  <InfoRow label="Color Space" value={imageMetadata.colorSpace} />
+                {processingRows.length ? (
+                  <InfoSection rows={processingRows} title="Processing" />
                 ) : null}
               </div>
             ) : (
@@ -143,6 +172,37 @@ export function InfoPanel({
         </div>
       </div>
     </aside>
+  );
+}
+
+function formatDimensions(width: number, height: number) {
+  const megapixels = (width * height) / 1_000_000;
+  const megapixelLabel =
+    megapixels >= 10 ? megapixels.toFixed(1) : megapixels.toFixed(2);
+
+  return `${width} x ${height} (${megapixelLabel} MP)`;
+}
+
+function InfoSection({
+  rows,
+  title,
+}: {
+  rows: InfoRowItem[];
+  title: string;
+}) {
+  return (
+    <section className="grid gap-2 rounded-lg border border-border/70 bg-muted/25 p-3">
+      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {title}
+      </div>
+      <div className="grid gap-3">
+        {rows.map((row) =>
+          row.value ? (
+            <InfoRow key={`${title}-${row.label}`} label={row.label} value={row.value} />
+          ) : null,
+        )}
+      </div>
+    </section>
   );
 }
 
