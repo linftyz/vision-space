@@ -18,6 +18,7 @@ import { useViewerStore } from "@/stores/viewer-store";
 import type { FitMode, ImageFile, RecentItem } from "@/types/viewer";
 
 export function TopBar({
+  clearRecents,
   currentImage,
   openFolder,
   openImage,
@@ -26,6 +27,7 @@ export function TopBar({
   toggleFilmstrip,
   zoomBy,
 }: {
+  clearRecents: () => Promise<void>;
   currentImage: ImageFile | null;
   openFolder: () => Promise<void>;
   openImage: () => Promise<void>;
@@ -73,7 +75,10 @@ export function TopBar({
         >
           <FolderOpen aria-hidden="true" />
         </TooltipButton>
-        <RecentItemsPopover openRecentItem={openRecentItem} />
+        <RecentItemsPopover
+          clearRecents={clearRecents}
+          openRecentItem={openRecentItem}
+        />
 
         <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
 

@@ -30,6 +30,7 @@ export function ViewerShell() {
   return (
     <main className="isolate flex h-screen w-screen min-w-0 flex-col overflow-hidden bg-background text-foreground">
       <TopBar
+        clearRecents={actions.clearRecents}
         currentImage={currentImage}
         openFolder={actions.openFolder}
         openImage={actions.openImage}

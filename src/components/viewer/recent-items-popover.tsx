@@ -1,4 +1,4 @@
-import { History } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -12,8 +12,10 @@ import { useViewerStore } from "@/stores/viewer-store";
 import type { RecentItem } from "@/types/viewer";
 
 export function RecentItemsPopover({
+  clearRecents,
   openRecentItem,
 }: {
+  clearRecents: () => Promise<void>;
   openRecentItem: (item: RecentItem) => Promise<void>;
 }) {
   const recentFiles = useViewerStore((state) => state.recentFiles);
@@ -32,11 +34,22 @@ export function RecentItemsPopover({
         className="max-h-[calc(100vh-5rem)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto viewer-scrollbar"
       >
         <div className="grid gap-4">
-          <div>
-            <PopoverTitle className="text-base">Recent</PopoverTitle>
-            <PopoverDescription>
-              Quickly reopen files and folders.
-            </PopoverDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <PopoverTitle className="text-base">Recent</PopoverTitle>
+              <PopoverDescription>
+                Quickly reopen files and folders.
+              </PopoverDescription>
+            </div>
+            <Button
+              aria-label="Clear recent items"
+              disabled={!hasRecentItems}
+              onClick={() => void clearRecents()}
+              size="icon-xs"
+              variant="ghost"
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
           </div>
 
           {hasRecentItems ? (

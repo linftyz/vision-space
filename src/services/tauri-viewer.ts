@@ -155,6 +155,15 @@ export async function removeRecentItem(kind: RecentItemKind, path: string) {
   });
 }
 
+export async function clearRecentItems() {
+  if (!isTauri()) return;
+
+  const store = await loadRecentsStore();
+  await store.set("recentFiles", []);
+  await store.set("recentFolders", []);
+  useViewerStore.getState().setRecentItems(defaultRecents);
+}
+
 export async function loadCollection(
   paths: string[],
   recentItem?: Pick<RecentItem, "kind" | "path">,

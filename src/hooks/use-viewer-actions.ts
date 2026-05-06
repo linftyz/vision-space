@@ -2,6 +2,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import { useCallback } from "react";
 import { showError, showInfo } from "@/services/toasts";
 import {
+  clearRecentItems,
   loadCollection,
   openFolderDialog,
   openImageDialog,
@@ -94,6 +95,15 @@ export function useViewerActions() {
     setZoom(zoom * delta);
   }, []);
 
+  const clearRecents = useCallback(async () => {
+    if (!isTauri()) {
+      showInfo("Run inside Tauri", "Recent items are available in the desktop app.");
+      return;
+    }
+
+    await clearRecentItems();
+  }, []);
+
   const setFitMode = useCallback((fitMode: Exclude<FitMode, "free">) => {
     useViewerStore.getState().setFitMode(fitMode);
     void savePreference("fitMode", fitMode);
@@ -106,6 +116,7 @@ export function useViewerActions() {
 
   return {
     loadPaths,
+    clearRecents,
     openFolder,
     openImage,
     openRecentItem,
