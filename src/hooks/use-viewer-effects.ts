@@ -7,6 +7,7 @@ import { showError } from "@/services/toasts";
 import { applyTheme, subscribeSystemTheme } from "@/services/theme";
 import {
   assetUrl,
+  loadImageMetadata,
   loadPreferences,
   loadRecents,
 } from "@/services/tauri-viewer";
@@ -220,4 +221,37 @@ export function useAdjacentImagePreload() {
       });
     };
   }, [collection, currentIndex]);
+}
+
+export function useImageMetadata(currentImagePath: string | null) {
+  const showInfoPanel = useViewerStore((state) => state.showInfoPanel);
+
+  useEffect(() => {
+    if (!currentImagePath || !showInfoPanel) {
+      useViewerStore.getState().setImageMetadata(null);
+      useViewerStore.getState().setImageMetadataStatus("idle");
+      return;
+    }
+
+    let cancelled = false;
+    const store = useViewerStore.getState();
+    store.setImageMetadataStatus("loading");
+
+    void loadImageMetadata(currentImagePath)
+      .then((imageMetadata) => {
+        if (cancelled) return;
+        useViewerStore.getState().setImageMetadata(imageMetadata);
+        useViewerStore.getState().setImageMetadataStatus("loaded");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        showError(error);
+        useViewerStore.getState().setImageMetadata(null);
+        useViewerStore.getState().setImageMetadataStatus("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentImagePath, showInfoPanel]);
 }

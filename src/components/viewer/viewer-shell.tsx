@@ -9,6 +9,7 @@ import {
   useAdjacentImagePreload,
   useAppMenu,
   useDragAndDrop,
+  useImageMetadata,
   useThemeSync,
   useViewerPreferences,
   useViewerShortcuts,
@@ -27,6 +28,7 @@ export function ViewerShell() {
   useAppMenu(actions);
   useViewerShortcuts(actions);
   useAdjacentImagePreload();
+  useImageMetadata(currentImage?.path ?? null);
 
   return (
     <main className="isolate flex h-screen w-screen min-w-0 flex-col overflow-hidden bg-background text-foreground">

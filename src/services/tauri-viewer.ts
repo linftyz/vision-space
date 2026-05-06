@@ -10,6 +10,7 @@ import {
 import {
   IMAGE_EXTENSIONS,
   type ImageCollection,
+  type ImageMetadata,
   type RecentItem,
   type RecentItemKind,
   type ViewerPreferences,
@@ -208,6 +209,11 @@ export async function loadCollection(
   }
 
   return collection;
+}
+
+export async function loadImageMetadata(path: string) {
+  if (!isTauri()) return null;
+  return invoke<ImageMetadata | null>("load_image_metadata", { path });
 }
 
 export async function openImageDialog() {

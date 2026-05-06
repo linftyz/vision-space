@@ -21,6 +21,8 @@ export function InfoPanel({
 }) {
   const collection = useViewerStore((state) => state.collection);
   const currentIndex = useViewerStore((state) => state.currentIndex);
+  const imageMetadata = useViewerStore((state) => state.imageMetadata);
+  const imageMetadataStatus = useViewerStore((state) => state.imageMetadataStatus);
   const imageSize = useViewerStore((state) => state.imageSize);
   const showInfoPanel = useViewerStore((state) => state.showInfoPanel);
   const setShowInfoPanel = useViewerStore((state) => state.setShowInfoPanel);
@@ -73,6 +75,53 @@ export function InfoPanel({
         <div className="grid gap-2 border-t pt-4">
           <InfoBlock label="Folder" value={dirname(currentImage.path)} />
           <InfoBlock label="Path" value={currentImage.path} />
+        </div>
+
+        <div className="grid gap-3 border-t pt-4">
+          <div className="font-medium text-sm">EXIF</div>
+          {imageMetadataStatus === "loading" ? (
+            <div className="text-muted-foreground text-sm">Loading metadata...</div>
+          ) : imageMetadata ? (
+            <div className="grid gap-3">
+              {imageMetadata.cameraModel ? (
+                <InfoRow label="Camera" value={imageMetadata.cameraModel} />
+              ) : null}
+              {imageMetadata.lensModel ? (
+                <InfoRow label="Lens" value={imageMetadata.lensModel} />
+              ) : null}
+              {imageMetadata.dateTimeOriginal ? (
+                <InfoRow label="Shot At" value={imageMetadata.dateTimeOriginal} />
+              ) : null}
+              {imageMetadata.exposureTime ? (
+                <InfoRow label="Exposure" value={imageMetadata.exposureTime} />
+              ) : null}
+              {imageMetadata.fNumber ? (
+                <InfoRow label="Aperture" value={imageMetadata.fNumber} />
+              ) : null}
+              {imageMetadata.iso ? (
+                <InfoRow label="ISO" value={imageMetadata.iso} />
+              ) : null}
+              {imageMetadata.focalLength ? (
+                <InfoRow label="Focal Length" value={imageMetadata.focalLength} />
+              ) : null}
+              {imageMetadata.orientation ? (
+                <InfoRow
+                  label="Orientation"
+                  value={String(imageMetadata.orientation)}
+                />
+              ) : null}
+              {imageMetadata.software ? (
+                <InfoRow label="Software" value={imageMetadata.software} />
+              ) : null}
+              {imageMetadata.colorSpace ? (
+                <InfoRow label="Color Space" value={imageMetadata.colorSpace} />
+              ) : null}
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-sm">
+              No EXIF metadata was found for this image.
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 border-t pt-4">

@@ -35,6 +35,19 @@ export type ImageCollection = {
   selectedIndex: number;
 };
 
+export type ImageMetadata = {
+  cameraModel?: string | null;
+  colorSpace?: string | null;
+  dateTimeOriginal?: string | null;
+  exposureTime?: string | null;
+  fNumber?: string | null;
+  focalLength?: string | null;
+  iso?: string | null;
+  lensModel?: string | null;
+  orientation?: number | null;
+  software?: string | null;
+};
+
 export type ViewerPreferences = {
   fitMode: Exclude<FitMode, "free">;
   sortMode: SortMode;

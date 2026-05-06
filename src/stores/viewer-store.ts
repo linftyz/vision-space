@@ -4,6 +4,7 @@ import type {
   FitMode,
   ImageCollection,
   ImageFile,
+  ImageMetadata,
   RecentItem,
   SortMode,
   ThemeAccent,
@@ -25,6 +26,8 @@ type ViewerState = {
   showInfoPanel: boolean;
   loadingMessage: string | null;
   loadError: string | null;
+  imageMetadata: ImageMetadata | null;
+  imageMetadataStatus: "idle" | "loading" | "loaded" | "error";
   zoom: number;
   rotation: number;
   pan: { x: number; y: number };
@@ -46,6 +49,10 @@ type ViewerState = {
   toggleInfoPanel: () => void;
   setLoadingMessage: (message: string | null) => void;
   setLoadError: (message: string | null) => void;
+  setImageMetadata: (imageMetadata: ImageMetadata | null) => void;
+  setImageMetadataStatus: (
+    imageMetadataStatus: "idle" | "loading" | "loaded" | "error",
+  ) => void;
   setZoom: (zoom: number) => void;
   setRotation: (rotation: number) => void;
   rotateClockwise: () => void;
@@ -80,6 +87,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   showInfoPanel: false,
   loadingMessage: null,
   loadError: null,
+  imageMetadata: null,
+  imageMetadataStatus: "idle",
   zoom: 1,
   rotation: 0,
   pan: { x: 0, y: 0 },
@@ -98,6 +107,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
     set({
       collection: { ...collection, images, selectedIndex },
       currentIndex: selectedIndex,
+      imageMetadata: null,
+      imageMetadataStatus: "idle",
       imageSize: null,
       loadError: null,
       pan: { x: 0, y: 0 },
@@ -115,6 +126,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
 
     set({
       currentIndex,
+      imageMetadata: null,
+      imageMetadataStatus: "idle",
       imageSize: null,
       pan: { x: 0, y: 0 },
       rotation: 0,
@@ -165,6 +178,8 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
     set((state) => ({ showInfoPanel: !state.showInfoPanel })),
   setLoadingMessage: (message) => set({ loadingMessage: message }),
   setLoadError: (message) => set({ loadError: message }),
+  setImageMetadata: (imageMetadata) => set({ imageMetadata }),
+  setImageMetadataStatus: (imageMetadataStatus) => set({ imageMetadataStatus }),
   setZoom: (zoom) =>
     set({
       fitMode: "free",

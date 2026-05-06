@@ -1,6 +1,8 @@
+use exif::{In, Reader, Tag, Value};
 use serde::Serialize;
 use std::{
     fs,
+    io::BufReader,
     path::{Path, PathBuf},
     time::UNIX_EPOCH,
 };
@@ -25,6 +27,21 @@ struct ImageCollection {
     root_path: Option<String>,
     images: Vec<ImageFile>,
     selected_index: usize,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ImageMetadata {
+    camera_model: Option<String>,
+    color_space: Option<String>,
+    date_time_original: Option<String>,
+    exposure_time: Option<String>,
+    f_number: Option<String>,
+    focal_length: Option<String>,
+    iso: Option<String>,
+    lens_model: Option<String>,
+    orientation: Option<u16>,
+    software: Option<String>,
 }
 
 fn is_supported_image(path: &Path) -> bool {
@@ -137,9 +154,57 @@ fn collection_from_path(path: PathBuf) -> Result<ImageCollection, String> {
     })
 }
 
+fn field_display(exif: &exif::Exif, tag: Tag) -> Option<String> {
+    exif.get_field(tag, In::PRIMARY)
+        .map(|field| field.display_value().with_unit(exif).to_string())
+}
+
+fn orientation_value(exif: &exif::Exif) -> Option<u16> {
+    let field = exif.get_field(Tag::Orientation, In::PRIMARY)?;
+    match &field.value {
+        Value::Short(values) => values.first().copied(),
+        _ => None,
+    }
+}
+
+fn image_metadata_from_path(path: PathBuf) -> Result<Option<ImageMetadata>, String> {
+    let file = fs::File::open(&path)
+        .map_err(|error| format!("Could not read metadata from '{}': {error}", path.display()))?;
+    let mut reader = BufReader::new(file);
+    let exif = match Reader::new().read_from_container(&mut reader) {
+        Ok(exif) => exif,
+        Err(exif::Error::NotFound(_)) => return Ok(None),
+        Err(error) => {
+            return Err(format!(
+                "Could not read EXIF metadata from '{}': {error}",
+                path.display()
+            ))
+        }
+    };
+
+    Ok(Some(ImageMetadata {
+        camera_model: field_display(&exif, Tag::Model),
+        color_space: field_display(&exif, Tag::ColorSpace),
+        date_time_original: field_display(&exif, Tag::DateTimeOriginal),
+        exposure_time: field_display(&exif, Tag::ExposureTime),
+        f_number: field_display(&exif, Tag::FNumber),
+        focal_length: field_display(&exif, Tag::FocalLength),
+        iso: field_display(&exif, Tag::PhotographicSensitivity)
+            .or_else(|| field_display(&exif, Tag::ISOSpeed)),
+        lens_model: field_display(&exif, Tag::LensModel),
+        orientation: orientation_value(&exif),
+        software: field_display(&exif, Tag::Software),
+    }))
+}
+
 #[tauri::command]
 fn load_path(path: String) -> Result<ImageCollection, String> {
     collection_from_path(PathBuf::from(path))
+}
+
+#[tauri::command]
+fn load_image_metadata(path: String) -> Result<Option<ImageMetadata>, String> {
+    image_metadata_from_path(PathBuf::from(path))
 }
 
 #[tauri::command]
@@ -185,7 +250,11 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![load_path, load_paths])
+        .invoke_handler(tauri::generate_handler![
+            load_path,
+            load_paths,
+            load_image_metadata
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
