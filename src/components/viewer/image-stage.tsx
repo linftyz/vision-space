@@ -24,7 +24,15 @@ function isInteractiveTarget(target: EventTarget | null) {
     : false;
 }
 
-export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
+export function ImageStage({
+  copyPath,
+  currentImage,
+  revealPath,
+}: {
+  copyPath: (path: string) => Promise<void>;
+  currentImage: ImageFile;
+  revealPath: (path: string) => Promise<void>;
+}) {
   const [stageRef, stageSize] = useElementSize<HTMLDivElement>();
   const [isDragging, setIsDragging] = useState(false);
   const [imageStatus, setImageStatus] = useState<ImageLoadStatus>("loading");
@@ -187,7 +195,11 @@ export function ImageStage({ currentImage }: { currentImage: ImageFile }) {
       </div>
 
       <div className="absolute inset-0 z-20">
-        <ImageHud currentImage={currentImage} />
+        <ImageHud
+          copyPath={copyPath}
+          currentImage={currentImage}
+          revealPath={revealPath}
+        />
       </div>
     </div>
   );

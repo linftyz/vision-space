@@ -1,11 +1,13 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { useCallback } from "react";
-import { showError, showInfo } from "@/services/toasts";
+import { showError, showInfo, showSuccess } from "@/services/toasts";
 import {
   clearRecentItems,
+  copyTextToClipboard,
   loadCollection,
   openFolderDialog,
   openImageDialog,
+  revealInFinder,
   removeRecentItem,
   savePreference,
 } from "@/services/tauri-viewer";
@@ -102,6 +104,29 @@ export function useViewerActions() {
     }
 
     await clearRecentItems();
+    showSuccess("Recents cleared");
+  }, []);
+
+  const copyPath = useCallback(async (path: string) => {
+    try {
+      await copyTextToClipboard(path);
+      showSuccess("Path copied", path);
+    } catch (error) {
+      showError(error);
+    }
+  }, []);
+
+  const revealPath = useCallback(async (path: string) => {
+    if (!isTauri()) {
+      showInfo("Run inside Tauri", "Reveal in Finder is available in the desktop app.");
+      return;
+    }
+
+    try {
+      await revealInFinder(path);
+    } catch (error) {
+      showError(error);
+    }
   }, []);
 
   const setFitMode = useCallback((fitMode: Exclude<FitMode, "free">) => {
@@ -117,9 +142,11 @@ export function useViewerActions() {
   return {
     loadPaths,
     clearRecents,
+    copyPath,
     openFolder,
     openImage,
     openRecentItem,
+    revealPath,
     setFitMode,
     toggleFilmstrip,
     zoomBy,

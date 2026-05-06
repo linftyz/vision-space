@@ -18,3 +18,12 @@ export function formatBytes(bytes: number) {
 
   return `${value >= 10 || exponent === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[exponent]}`;
 }
+
+export function formatModifiedDate(modifiedMs?: number) {
+  if (!modifiedMs) return null;
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(modifiedMs));
+}

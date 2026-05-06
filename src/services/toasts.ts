@@ -11,3 +11,7 @@ export function showError(error: unknown) {
 export function showInfo(title: string, description?: string) {
   toastManager.add({ title, description, type: "info" });
 }
+
+export function showSuccess(title: string, description?: string) {
+  toastManager.add({ title, description, type: "success" });
+}

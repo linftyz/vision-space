@@ -42,7 +42,11 @@ export function ViewerShell() {
 
       <div className="relative min-h-0 min-w-0 flex-1 bg-[radial-gradient(circle_at_18%_10%,--alpha(var(--color-amber-400)/10%),transparent_26rem),linear-gradient(135deg,--alpha(var(--color-neutral-950)/96%),--alpha(var(--color-stone-950)/96%))] text-neutral-100">
         {currentImage ? (
-          <ImageStage currentImage={currentImage} />
+          <ImageStage
+            copyPath={actions.copyPath}
+            currentImage={currentImage}
+            revealPath={actions.revealPath}
+          />
         ) : (
           <EmptyState
             openFolder={actions.openFolder}

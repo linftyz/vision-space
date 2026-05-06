@@ -1,5 +1,6 @@
 import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { Store } from "@tauri-apps/plugin-store";
 import {
   defaultRecents,
@@ -19,6 +20,28 @@ const RECENT_ITEM_LIMIT = 10;
 
 export function assetUrl(path: string) {
   return isTauri() ? convertFileSrc(path) : path;
+}
+
+export async function revealInFinder(path: string) {
+  if (!isTauri()) return;
+  await revealItemInDir(path);
+}
+
+export async function copyTextToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
 }
 
 function basename(path: string) {
