@@ -180,7 +180,7 @@ fn image_metadata_from_path(path: PathBuf) -> Result<Option<ImageMetadata>, Stri
     let mut reader = BufReader::new(file);
     let exif = match Reader::new().read_from_container(&mut reader) {
         Ok(exif) => exif,
-        Err(exif::Error::NotFound(_)) => return Ok(None),
+        Err(exif::Error::NotFound(_) | exif::Error::InvalidFormat(_)) => return Ok(None),
         Err(error) => {
             return Err(format!(
                 "Could not read EXIF metadata from '{}': {error}",
