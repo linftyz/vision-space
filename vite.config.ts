@@ -8,6 +8,26 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          tauri: [
+            "@tauri-apps/api",
+            "@tauri-apps/plugin-dialog",
+            "@tauri-apps/plugin-store",
+          ],
+          vendor: [
+            "@base-ui/react",
+            "lucide-react",
+            "react",
+            "react-dom",
+            "zustand",
+          ],
+        },
+      },
+    },
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
