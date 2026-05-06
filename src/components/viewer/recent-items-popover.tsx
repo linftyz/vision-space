@@ -13,9 +13,13 @@ import type { RecentItem } from "@/types/viewer";
 
 export function RecentItemsPopover({
   clearRecents,
+  openFolder,
+  openImage,
   openRecentItem,
 }: {
   clearRecents: () => Promise<void>;
+  openFolder: () => Promise<void>;
+  openImage: () => Promise<void>;
   openRecentItem: (item: RecentItem) => Promise<void>;
 }) {
   const recentFiles = useViewerStore((state) => state.recentFiles);
@@ -66,8 +70,18 @@ export function RecentItemsPopover({
               />
             </div>
           ) : (
-            <div className="rounded-lg border bg-muted/40 px-3 py-2 text-muted-foreground text-xs">
-              Recently opened files and folders will appear here.
+            <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
+              <div className="text-muted-foreground text-xs">
+                Recently opened files and folders will appear here.
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={() => void openImage()} size="sm">
+                  Open Image
+                </Button>
+                <Button onClick={() => void openFolder()} size="sm" variant="outline">
+                  Open Folder
+                </Button>
+              </div>
             </div>
           )}
         </div>

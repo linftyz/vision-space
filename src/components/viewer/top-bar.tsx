@@ -77,6 +77,8 @@ export function TopBar({
         </TooltipButton>
         <RecentItemsPopover
           clearRecents={clearRecents}
+          openFolder={openFolder}
+          openImage={openImage}
           openRecentItem={openRecentItem}
         />
 
