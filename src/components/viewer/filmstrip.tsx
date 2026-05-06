@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PanelBottom } from "lucide-react";
+import { ImageOff, PanelBottom } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useElementSize } from "@/hooks/use-element-size";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { assetUrl } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
+import type { ImageFile } from "@/types/viewer";
 
 const OVERSCAN_ITEMS = 8;
 
@@ -23,6 +25,15 @@ export function Filmstrip() {
   const itemStride = itemWidth + itemGap;
   const images = collection?.images ?? [];
   const totalWidth = Math.max(images.length * itemStride - itemGap, itemWidth);
+  const canScroll = totalWidth > viewportSize.width + 1;
+  const showLeftFade = canScroll && scrollLeft > 1;
+  const showRightFade =
+    canScroll && scrollLeft + viewportSize.width < totalWidth - 1;
+
+  useEffect(() => {
+    setScrollLeft(0);
+    viewportRef.current?.scrollTo({ left: 0 });
+  }, [collection?.rootPath, viewportRef]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -76,61 +87,126 @@ export function Filmstrip() {
   return (
     <footer className="z-20 flex h-20 shrink-0 items-center gap-2 border-t bg-background/86 px-2.5 backdrop-blur-xl sm:h-24 sm:px-3">
       <PanelBottom aria-hidden="true" className="hidden shrink-0 text-muted-foreground lg:block" />
-      <div
-        className="viewer-scrollbar min-w-0 flex-1 overflow-x-auto py-2"
-        onScroll={(event) => {
-          const nextScrollLeft = event.currentTarget.scrollLeft;
-          if (rafRef.current !== null) return;
-          rafRef.current = requestAnimationFrame(() => {
-            setScrollLeft(nextScrollLeft);
-            rafRef.current = null;
-          });
-        }}
-        ref={viewportRef}
-      >
+      <div className="relative min-w-0 flex-1">
         <div
-          className="relative"
-          style={{ height: itemHeight, width: totalWidth }}
+          className="viewer-scrollbar min-w-0 overflow-x-auto py-2"
+          onScroll={(event) => {
+            const nextScrollLeft = event.currentTarget.scrollLeft;
+            if (rafRef.current !== null) return;
+            rafRef.current = requestAnimationFrame(() => {
+              setScrollLeft(nextScrollLeft);
+              rafRef.current = null;
+            });
+          }}
+          ref={viewportRef}
         >
-          {visibleImages.map((image, offset) => {
-            const index = visibleRange.start + offset;
-            return (
-              <button
-                aria-label={`Show ${image.name}`}
-                className={cn(
-                  "absolute top-0 overflow-hidden rounded-md border bg-muted outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
-                  index === currentIndex
-                    ? "border-primary shadow-md shadow-primary/20"
-                    : "hover:border-primary/40",
-                )}
-                key={image.path}
-                onClick={() => setCurrentIndex(index)}
-                style={{
-                  height: itemHeight,
-                  left: index * itemStride,
-                  width: itemWidth,
-                }}
-                type="button"
-              >
-                <img
-                  alt=""
-                  className="size-full object-cover"
-                  decoding="async"
-                  draggable={false}
-                  loading="lazy"
-                  src={assetUrl(image.path)}
+          <div
+            className="relative"
+            style={{ height: itemHeight, width: totalWidth }}
+          >
+            {visibleImages.map((image, offset) => {
+              const index = visibleRange.start + offset;
+              return (
+                <ThumbnailTile
+                  currentIndex={currentIndex}
+                  image={image}
+                  index={index}
+                  itemHeight={itemHeight}
+                  itemStride={itemStride}
+                  itemWidth={itemWidth}
+                  key={image.path}
+                  onSelect={setCurrentIndex}
                 />
-                <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-1 py-0.5 text-[10px] text-white">
-                  {image.name}
-                </span>
-              </button>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+        <div
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-y-2 left-0 w-6 rounded-l-md bg-gradient-to-r from-background/92 to-transparent transition-opacity",
+            showLeftFade ? "opacity-100" : "opacity-0",
+          )}
+        />
+        <div
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-y-2 right-0 w-6 rounded-r-md bg-gradient-to-l from-background/92 to-transparent transition-opacity",
+            showRightFade ? "opacity-100" : "opacity-0",
+          )}
+        />
       </div>
       <div className="hidden w-16 shrink-0 text-right text-muted-foreground text-xs tabular-nums sm:block">
         {currentIndex + 1}/{collection.images.length}
       </div>
     </footer>
+  );
+}
+
+function ThumbnailTile({
+  currentIndex,
+  image,
+  index,
+  itemHeight,
+  itemStride,
+  itemWidth,
+  onSelect,
+}: {
+  currentIndex: number;
+  image: ImageFile;
+  index: number;
+  itemHeight: number;
+  itemStride: number;
+  itemWidth: number;
+  onSelect: (index: number) => void;
+}) {
+  const [status, setStatus] = useState<"loading" | "loaded" | "error">(
+    "loading",
+  );
+
+  useEffect(() => {
+    setStatus("loading");
+  }, [image.path]);
+
+  return (
+    <button
+      aria-label={`Show ${image.name}`}
+      className={cn(
+        "absolute top-0 overflow-hidden rounded-md border bg-muted outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+        index === currentIndex
+          ? "border-primary shadow-md shadow-primary/20"
+          : "hover:border-primary/40",
+      )}
+      onClick={() => onSelect(index)}
+      style={{
+        height: itemHeight,
+        left: index * itemStride,
+        width: itemWidth,
+      }}
+      type="button"
+    >
+      {status === "loading" && <Skeleton className="absolute inset-0 rounded-none" />}
+      {status === "error" && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
+          <ImageOff aria-hidden="true" className="size-4 opacity-70" />
+        </div>
+      )}
+      <img
+        alt=""
+        className={cn(
+          "size-full object-cover transition-opacity duration-200",
+          status === "loaded" ? "opacity-100" : "opacity-0",
+        )}
+        decoding="async"
+        draggable={false}
+        loading="lazy"
+        onError={() => setStatus("error")}
+        onLoad={() => setStatus("loaded")}
+        src={assetUrl(image.path)}
+      />
+      <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-1 py-0.5 text-[10px] text-white">
+        {image.name}
+      </span>
+    </button>
   );
 }
