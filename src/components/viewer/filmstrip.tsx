@@ -4,6 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useElementSize } from "@/hooks/use-element-size";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import {
+  ensureThumbnail,
+  getThumbnailStatus,
+  type ThumbnailStatus,
+} from "@/services/thumbnail-cache";
 import { assetUrl } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { ImageFile } from "@/types/viewer";
@@ -160,13 +165,24 @@ function ThumbnailTile({
   itemWidth: number;
   onSelect: (index: number) => void;
 }) {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    "loading",
-  );
+  const [status, setStatus] = useState<ThumbnailStatus>(() => {
+    return getThumbnailStatus(image.path) ?? "loading";
+  });
 
   useEffect(() => {
-    setStatus("loading");
-  }, [image.path]);
+    if (status !== "loading") return;
+
+    let isMounted = true;
+    void ensureThumbnail(image.path).then((nextStatus) => {
+      if (isMounted) {
+        setStatus(nextStatus);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [image.path, status]);
 
   return (
     <button
