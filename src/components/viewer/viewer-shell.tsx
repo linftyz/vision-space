@@ -5,6 +5,7 @@ import { LoadStateOverlay } from "@/components/viewer/load-state-overlay";
 import { TopBar } from "@/components/viewer/top-bar";
 import { useViewerActions } from "@/hooks/use-viewer-actions";
 import {
+  useAdjacentImagePreload,
   useAppMenu,
   useDragAndDrop,
   useThemeSync,
@@ -24,6 +25,7 @@ export function ViewerShell() {
   useDragAndDrop(actions.loadPaths);
   useAppMenu(actions);
   useViewerShortcuts(actions);
+  useAdjacentImagePreload();
 
   return (
     <main className="isolate flex h-screen w-screen min-w-0 flex-col overflow-hidden bg-background text-foreground">

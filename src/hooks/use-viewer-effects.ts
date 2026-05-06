@@ -5,7 +5,11 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 import { showError } from "@/services/toasts";
 import { applyTheme, subscribeSystemTheme } from "@/services/theme";
-import { loadPreferences, loadRecents } from "@/services/tauri-viewer";
+import {
+  assetUrl,
+  loadPreferences,
+  loadRecents,
+} from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { useViewerActions } from "@/hooks/use-viewer-actions";
 
@@ -177,4 +181,29 @@ export function useViewerShortcuts({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setFitMode, zoomBy]);
+}
+
+export function useAdjacentImagePreload() {
+  const collection = useViewerStore((state) => state.collection);
+  const currentIndex = useViewerStore((state) => state.currentIndex);
+
+  useEffect(() => {
+    if (!collection) return;
+
+    const preloadIndexes = [currentIndex - 1, currentIndex + 1].filter(
+      (index) => index >= 0 && index < collection.images.length,
+    );
+    const preloadedImages = preloadIndexes.map((index) => {
+      const image = new window.Image();
+      image.decoding = "async";
+      image.src = assetUrl(collection.images[index].path);
+      return image;
+    });
+
+    return () => {
+      preloadedImages.forEach((image) => {
+        image.src = "";
+      });
+    };
+  }, [collection, currentIndex]);
 }
