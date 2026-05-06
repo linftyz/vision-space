@@ -216,6 +216,11 @@ export async function loadImageMetadata(path: string) {
   return invoke<ImageMetadata | null>("load_image_metadata", { path });
 }
 
+export async function takeOpenedPaths() {
+  if (!isTauri()) return [];
+  return invoke<string[]>("take_opened_paths");
+}
+
 export async function openImageDialog() {
   const selected = await open({
     multiple: false,

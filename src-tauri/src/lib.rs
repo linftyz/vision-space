@@ -4,8 +4,10 @@ use std::{
     fs,
     io::BufReader,
     path::{Path, PathBuf},
+    sync::Mutex,
     time::UNIX_EPOCH,
 };
+use tauri::{Emitter, Manager, RunEvent, State};
 
 const SUPPORTED_EXTENSIONS: &[&str] = &[
     "jpg", "jpeg", "png", "webp", "gif", "bmp", "tif", "tiff", "avif", "svg",
@@ -42,6 +44,11 @@ struct ImageMetadata {
     lens_model: Option<String>,
     orientation: Option<u16>,
     software: Option<String>,
+}
+
+#[derive(Default)]
+struct OpenedFilesState {
+    paths: Mutex<Vec<String>>,
 }
 
 fn is_supported_image(path: &Path) -> bool {
@@ -208,6 +215,12 @@ fn load_image_metadata(path: String) -> Result<Option<ImageMetadata>, String> {
 }
 
 #[tauri::command]
+fn take_opened_paths(state: State<'_, OpenedFilesState>) -> Vec<String> {
+    let mut paths = state.paths.lock().expect("opened files mutex poisoned");
+    std::mem::take(&mut *paths)
+}
+
+#[tauri::command]
 fn load_paths(paths: Vec<String>) -> Result<ImageCollection, String> {
     if paths.is_empty() {
         return Err("No files were provided.".to_string());
@@ -246,6 +259,7 @@ fn load_paths(paths: Vec<String>) -> Result<ImageCollection, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(OpenedFilesState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -253,8 +267,31 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             load_path,
             load_paths,
-            load_image_metadata
+            load_image_metadata,
+            take_opened_paths
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let RunEvent::Opened { urls } = event {
+                let paths = urls
+                    .into_iter()
+                    .filter_map(|url| url.to_file_path().ok())
+                    .map(|path| path.to_string_lossy().to_string())
+                    .collect::<Vec<_>>();
+
+                if paths.is_empty() {
+                    return;
+                }
+
+                let state = app.state::<OpenedFilesState>();
+                state
+                    .paths
+                    .lock()
+                    .expect("opened files mutex poisoned")
+                    .extend(paths.clone());
+
+                let _ = app.emit("vision-space://opened-files", paths);
+            }
+        });
 }

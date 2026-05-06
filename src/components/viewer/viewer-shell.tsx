@@ -10,6 +10,7 @@ import {
   useAppMenu,
   useDragAndDrop,
   useImageMetadata,
+  useOpenedFiles,
   useThemeSync,
   useViewerPreferences,
   useViewerShortcuts,
@@ -25,6 +26,7 @@ export function ViewerShell() {
   useViewerPreferences();
   useThemeSync();
   useDragAndDrop(actions.loadPaths);
+  useOpenedFiles(actions.loadPaths);
   useAppMenu(actions);
   useViewerShortcuts(actions);
   useAdjacentImagePreload();

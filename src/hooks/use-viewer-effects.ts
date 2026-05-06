@@ -1,4 +1,5 @@
 import { isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { Menu } from "@tauri-apps/api/menu";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -10,6 +11,7 @@ import {
   loadImageMetadata,
   loadPreferences,
   loadRecents,
+  takeOpenedPaths,
 } from "@/services/tauri-viewer";
 import { useViewerStore } from "@/stores/viewer-store";
 import type { useViewerActions } from "@/hooks/use-viewer-actions";
@@ -57,6 +59,30 @@ export function useDragAndDrop(loadPaths: ViewerActions["loadPaths"]) {
       .then((callback) => {
         unlisten = callback;
       });
+
+    return () => unlisten?.();
+  }, [loadPaths]);
+}
+
+export function useOpenedFiles(loadPaths: ViewerActions["loadPaths"]) {
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    let unlisten: (() => void) | undefined;
+
+    void takeOpenedPaths().then((paths) => {
+      if (paths.length > 0) {
+        void loadPaths(paths);
+      }
+    });
+
+    void listen<string[]>("vision-space://opened-files", (event) => {
+      if (event.payload.length > 0) {
+        void loadPaths(event.payload);
+      }
+    }).then((callback) => {
+      unlisten = callback;
+    });
 
     return () => unlisten?.();
   }, [loadPaths]);
