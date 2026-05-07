@@ -21,11 +21,12 @@ export function Filmstrip() {
   const showFilmstrip = useViewerStore((state) => state.showFilmstrip);
   const setCurrentIndex = useViewerStore((state) => state.setCurrentIndex);
   const isWide = useMediaQuery("sm");
+  const isShortViewport = useMediaQuery("(max-height: 760px)");
   const [viewportRef, viewportSize] = useElementSize<HTMLDivElement>();
   const [scrollLeft, setScrollLeft] = useState(0);
   const rafRef = useRef<number | null>(null);
-  const itemWidth = isWide ? 80 : 64;
-  const itemHeight = isWide ? 64 : 56;
+  const itemWidth = isWide ? (isShortViewport ? 72 : 80) : isShortViewport ? 58 : 64;
+  const itemHeight = isWide ? (isShortViewport ? 58 : 64) : isShortViewport ? 48 : 56;
   const itemGap = isWide ? 8 : 6;
   const itemStride = itemWidth + itemGap;
   const images = collection?.images ?? [];
@@ -90,7 +91,12 @@ export function Filmstrip() {
   if (!collection || !showFilmstrip) return null;
 
   return (
-    <footer className="z-20 flex h-20 shrink-0 items-center gap-2 border-t bg-background/86 px-2.5 backdrop-blur-xl sm:h-24 sm:px-3">
+    <footer
+      className={cn(
+        "z-20 flex shrink-0 items-center gap-2 border-t bg-background/86 px-2.5 backdrop-blur-xl sm:px-3",
+        isShortViewport ? "h-16 sm:h-[4.5rem]" : "h-20 sm:h-24",
+      )}
+    >
       <PanelBottom aria-hidden="true" className="hidden shrink-0 text-muted-foreground lg:block" />
       <div className="relative min-w-0 flex-1">
         <div
@@ -119,6 +125,7 @@ export function Filmstrip() {
                   itemHeight={itemHeight}
                   itemStride={itemStride}
                   itemWidth={itemWidth}
+                  isCompact={isShortViewport}
                   key={image.path}
                   onSelect={setCurrentIndex}
                 />
@@ -155,6 +162,7 @@ function ThumbnailTile({
   itemHeight,
   itemStride,
   itemWidth,
+  isCompact,
   onSelect,
 }: {
   currentIndex: number;
@@ -163,6 +171,7 @@ function ThumbnailTile({
   itemHeight: number;
   itemStride: number;
   itemWidth: number;
+  isCompact: boolean;
   onSelect: (index: number) => void;
 }) {
   const [status, setStatus] = useState<ThumbnailStatus>(() => {
@@ -220,7 +229,12 @@ function ThumbnailTile({
         onLoad={() => setStatus("loaded")}
         src={assetUrl(image.path)}
       />
-      <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-1 py-0.5 text-[10px] text-white">
+      <span
+        className={cn(
+          "absolute inset-x-0 bottom-0 truncate bg-black/55 px-1 text-white",
+          isCompact ? "py-0.5 text-[9px]" : "py-0.5 text-[10px]",
+        )}
+      >
         {image.name}
       </span>
     </button>

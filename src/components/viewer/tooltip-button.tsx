@@ -15,6 +15,7 @@ export function TooltipButton({
   label,
   onClick,
   shortcut,
+  size = "icon",
 }: {
   buttonClassName?: string;
   children: ReactNode;
@@ -22,6 +23,7 @@ export function TooltipButton({
   label: string;
   onClick: () => void;
   shortcut?: string;
+  size?: React.ComponentProps<typeof Button>["size"];
 }) {
   return (
     <span className={className}>
@@ -32,7 +34,7 @@ export function TooltipButton({
               aria-label={label}
               className={cn("shrink-0", buttonClassName)}
               onClick={onClick}
-              size="icon"
+              size={size}
               variant="ghost"
             />
           }

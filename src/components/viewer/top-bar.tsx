@@ -12,6 +12,8 @@ import {
   Space,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 import { RecentItemsPopover } from "@/components/viewer/recent-items-popover";
 import { TooltipButton } from "@/components/viewer/tooltip-button";
 import { ViewerSettingsPopover } from "@/components/viewer/viewer-settings-popover";
@@ -44,22 +46,46 @@ export function TopBar({
   const zoom = useViewerStore((state) => state.zoom);
   const rotateClockwise = useViewerStore((state) => state.rotateClockwise);
   const imageCount = collection?.images.length ?? 0;
+  const isCompactWidth = useMediaQuery({ max: 920 });
+  const isShortViewport = useMediaQuery("(max-height: 760px)");
+  const isTinyViewport = useMediaQuery({ max: 520 });
+  const isCompactToolbar = isCompactWidth || isShortViewport;
+  const iconSize = isCompactToolbar ? "icon-sm" : "icon";
 
   return (
-    <header className="z-20 flex min-h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/82 px-2.5 py-2 text-foreground shadow-2xl shadow-black/20 backdrop-blur-xl sm:gap-3 sm:px-3">
+    <header
+      className={cn(
+        "z-20 flex shrink-0 items-center justify-between gap-2 border-b bg-background/82 text-foreground shadow-2xl shadow-black/20 backdrop-blur-xl",
+        isCompactToolbar
+          ? "min-h-12 px-2 py-1.5 sm:px-2.5"
+          : "min-h-14 px-2.5 py-2 sm:gap-3 sm:px-3",
+      )}
+    >
       <div className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-primary text-primary-foreground shadow-sm sm:size-8">
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-lg border bg-primary text-primary-foreground shadow-sm",
+            isCompactToolbar ? "size-7" : "size-8",
+          )}
+        >
           <Aperture aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <div className="truncate font-heading font-semibold text-sm">
+          <div
+            className={cn(
+              "truncate font-heading font-semibold",
+              isCompactToolbar ? "text-[13px]" : "text-sm",
+            )}
+          >
             {currentImage?.name ?? "Vision Space"}
           </div>
-          <div className="truncate text-muted-foreground text-xs leading-4">
-            {collection
-              ? `${currentIndex + 1} of ${imageCount}`
-              : "A quiet native image viewer"}
-          </div>
+          {!isTinyViewport ? (
+            <div className="truncate text-muted-foreground text-xs leading-4">
+              {collection
+                ? `${currentIndex + 1} of ${imageCount}`
+                : "A quiet native image viewer"}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -68,6 +94,7 @@ export function TopBar({
           label="Open image"
           onClick={() => void openImage()}
           shortcut="⌘O"
+          size={iconSize}
         >
           <ImageIcon aria-hidden="true" />
         </TooltipButton>
@@ -75,6 +102,7 @@ export function TopBar({
           label="Open folder"
           onClick={() => void openFolder()}
           shortcut="⇧⌘O"
+          size={iconSize}
         >
           <FolderOpen aria-hidden="true" />
         </TooltipButton>
@@ -91,6 +119,7 @@ export function TopBar({
           className="hidden sm:block"
           label="Zoom out"
           onClick={() => zoomBy(1 / 1.18)}
+          size={iconSize}
         >
           <Minus aria-hidden="true" />
         </TooltipButton>
@@ -114,28 +143,32 @@ export function TopBar({
           className="hidden sm:block"
           label="Zoom in"
           onClick={() => zoomBy(1.18)}
+          size={iconSize}
         >
           <Plus aria-hidden="true" />
         </TooltipButton>
         <TooltipButton
-          className="hidden sm:block"
+          className={cn("hidden sm:block", isShortViewport && "sm:hidden md:block")}
           label="Toggle info panel"
           onClick={toggleInfoPanel}
           shortcut="I"
+          size={iconSize}
         >
           <Info aria-hidden="true" />
         </TooltipButton>
         <TooltipButton
-          className="hidden md:block"
+          className={cn("hidden md:block", isCompactToolbar && "md:hidden")}
           label="Fit to window"
           onClick={() => setFitMode("fit")}
+          size={iconSize}
         >
           <Space aria-hidden="true" />
         </TooltipButton>
         <TooltipButton
-          className="hidden md:block"
+          className={cn("hidden md:block", isCompactToolbar && "md:hidden")}
           label="Rotate clockwise"
           onClick={rotateClockwise}
+          size={iconSize}
         >
           <RotateCw aria-hidden="true" />
         </TooltipButton>
@@ -147,7 +180,7 @@ export function TopBar({
         />
 
         <TooltipButton
-          className="hidden sm:block"
+          className={cn("hidden sm:block", isCompactToolbar && "sm:hidden lg:block")}
           label="Toggle full screen"
           onClick={() => {
             if (isTauri()) {
@@ -158,6 +191,7 @@ export function TopBar({
                 );
             }
           }}
+          size={iconSize}
         >
           <Maximize2 aria-hidden="true" />
         </TooltipButton>

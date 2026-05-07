@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageHud } from "@/components/viewer/image-hud";
 import { useElementSize } from "@/hooks/use-element-size";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { clamp } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { showError } from "@/services/toasts";
@@ -38,16 +39,20 @@ export function ImageStage({
   const [imageStatus, setImageStatus] = useState<ImageLoadStatus>("loading");
   const [reloadToken, setReloadToken] = useState(0);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const isShortViewport = useMediaQuery("(max-height: 760px)");
+  const isNarrowViewport = useMediaQuery({ max: 720 });
 
   const zoom = useViewerStore((state) => state.zoom);
   const fitMode = useViewerStore((state) => state.fitMode);
   const rotation = useViewerStore((state) => state.rotation);
   const pan = useViewerStore((state) => state.pan);
   const imageSize = useViewerStore((state) => state.imageSize);
+  const collection = useViewerStore((state) => state.collection);
   const setPan = useViewerStore((state) => state.setPan);
   const setImageSize = useViewerStore((state) => state.setImageSize);
   const next = useViewerStore((state) => state.next);
   const previous = useViewerStore((state) => state.previous);
+  const canNavigate = (collection?.images.length ?? 0) > 1;
 
   useEffect(() => {
     setImageStatus("loading");
@@ -57,8 +62,9 @@ export function ImageStage({
   const computedZoom = useMemo(() => {
     if (!imageSize || stageSize.width === 0 || stageSize.height === 0) return 1;
 
-    const horizontalInset = stageSize.width < 520 ? 32 : 96;
-    const verticalInset = stageSize.height < 520 ? 72 : 112;
+    const horizontalInset = stageSize.width < 520 || isNarrowViewport ? 28 : 96;
+    const verticalInset =
+      stageSize.height < 520 || isShortViewport ? 64 : 112;
     const widthRatio = Math.max(stageSize.width - horizontalInset, 1) / imageSize.width;
     const heightRatio =
       Math.max(stageSize.height - verticalInset, 1) / imageSize.height;
@@ -70,7 +76,15 @@ export function ImageStage({
     }
 
     return zoom;
-  }, [fitMode, imageSize, stageSize.height, stageSize.width, zoom]);
+  }, [
+    fitMode,
+    imageSize,
+    isNarrowViewport,
+    isShortViewport,
+    stageSize.height,
+    stageSize.width,
+    zoom,
+  ]);
 
   useEffect(() => {
     if (fitMode !== "free") {
@@ -115,24 +129,38 @@ export function ImageStage({
         store.setZoom(store.zoom * delta);
       }}
     >
-      <Button
-        aria-label="Previous image"
-        className="top-1/2 left-2 z-30 absolute -translate-y-1/2 bg-background/80 shadow-lg shadow-black/20 backdrop-blur sm:left-4"
-        onClick={previous}
-        size="icon"
-        variant="outline"
-      >
-        <ChevronLeft aria-hidden="true" />
-      </Button>
-      <Button
-        aria-label="Next image"
-        className="top-1/2 right-2 z-30 absolute -translate-y-1/2 bg-background/80 shadow-lg shadow-black/20 backdrop-blur sm:right-4"
-        onClick={next}
-        size="icon"
-        variant="outline"
-      >
-        <ChevronRight aria-hidden="true" />
-      </Button>
+      {canNavigate ? (
+        <>
+          <Button
+            aria-label="Previous image"
+            className={cn(
+              "absolute top-1/2 z-30 -translate-y-1/2 bg-background/80 shadow-lg shadow-black/20 backdrop-blur",
+              isShortViewport || isNarrowViewport
+                ? "left-2"
+                : "left-2 sm:left-4",
+            )}
+            onClick={previous}
+            size={isShortViewport || isNarrowViewport ? "icon-sm" : "icon"}
+            variant="outline"
+          >
+            <ChevronLeft aria-hidden="true" />
+          </Button>
+          <Button
+            aria-label="Next image"
+            className={cn(
+              "absolute top-1/2 z-30 -translate-y-1/2 bg-background/80 shadow-lg shadow-black/20 backdrop-blur",
+              isShortViewport || isNarrowViewport
+                ? "right-2"
+                : "right-2 sm:right-4",
+            )}
+            onClick={next}
+            size={isShortViewport || isNarrowViewport ? "icon-sm" : "icon"}
+            variant="outline"
+          >
+            <ChevronRight aria-hidden="true" />
+          </Button>
+        </>
+      ) : null}
 
       <div className="absolute inset-0 z-0 flex items-center justify-center">
         {imageStatus === "loading" && (
