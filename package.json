@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:macos": "pnpm tauri build -b app && ./scripts/build-macos-dmg.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
